@@ -1,10 +1,9 @@
 version: 0.0
-
 Resources:
-  - LambdaFunction:
+  - myLambdaFunction:
       Type: AWS::Lambda::Function
       Properties:
-        Name: payment-processing-lambda
-        Alias: prod
-        CurrentVersion: 1
-        TargetVersion: 2
+        Name: "payment-processing-lambda"
+        Alias: "prod"
+        CurrentVersion: "1"
+        TargetVersion: "2"

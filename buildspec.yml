@@ -1,16 +1,56 @@
 version: 0.2
 
 phases:
-
   install:
     runtime-versions:
       java: corretto21
 
+  pre_build:
+    commands:
+      - echo Pre-build phase started on `date`
+      - echo Checking Maven version
+      - mvn --version
+
   build:
     commands:
-      - echo Build started
+      - echo Build started on `date`
       - mvn clean package
+      - echo Build completed on `date`
+
+  post_build:
+    commands:
+      - echo Post-build phase started on `date`
+      - echo Preparing deployment artifacts
+      - mv target/payment-processing-lambda-1.0-SNAPSHOT.jar target/payment-processing-lambda.jar
+      - echo Updating Lambda function code
+      - aws lambda update-function-code --function-name payment-processing-lambda --zip-file fileb://target/payment-processing-lambda.jar
+      - echo Waiting for Lambda update to complete
+      - aws lambda wait function-updated --function-name payment-processing-lambda
+      - echo Publishing new Lambda version
+      - VERSION=$(aws lambda publish-version --function-name payment-processing-lambda --description "Build ${CODEBUILD_BUILD_NUMBER}" --query 'Version' --output text)
+      - echo "Published Lambda version $VERSION"
+      - echo $VERSION > lambda-version.txt
+      - echo Creating deployment appspec with version $VERSION
+      - |
+        cat > appspec.yml <<EOF
+        version: 0.0
+        Resources:
+          - myLambdaFunction:
+              Type: AWS::Lambda::Function
+              Properties:
+                Name: "payment-processing-lambda"
+                Alias: "prod"
+                CurrentVersion: "1"
+                TargetVersion: "$VERSION"
+        EOF
+      - cat appspec.yml
 
 artifacts:
   files:
-    - target/*.jar
+    - appspec.yml
+    - lambda-version.txt
+  discard-paths: yes
+
+cache:
+  paths:
+    - '/root/.m2/**/*'
