@@ -1,0 +1,10 @@
+version: 0.0
+
+Resources:
+  - LambdaFunction:
+      Type: AWS::Lambda::Function
+      Properties:
+        Name: payment-processing-lambda
+        Alias: prod
+        CurrentVersion: 1
+        TargetVersion: 2
