@@ -15,6 +15,7 @@ public class Handler implements RequestHandler<Request, Response> {
         context.getLogger().log("Received request");
 
         String message = "Hello " + request.getName();
+        System.out.println(message);
 
         return new Response(message);
     }
